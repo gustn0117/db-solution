@@ -2496,11 +2496,13 @@
     <!-- End of bodyEnd -->
 <script>
 document.addEventListener("DOMContentLoaded",function(){
-var hamburger=document.querySelector('nav[data-framer-name="Mobile"] .framer-9cii0g-container');
-if(hamburger){hamburger.style.cursor="pointer";hamburger.addEventListener("click",function(){
+document.querySelectorAll('.framer-9cii0g-container').forEach(function(el){
+el.style.cursor="pointer";
+el.addEventListener("click",function(){
 var links=document.querySelector(".mobile-nav-links");
 if(links){links.style.display=links.style.display==="none"?"flex":"none";}
-});}
+});
+});
 });
 </script>
 </body>
