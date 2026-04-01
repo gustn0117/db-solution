@@ -26,9 +26,41 @@ app.use((req, res, next) => {
   next();
 });
 
+// Decode Korean URL paths and try .html extension
+app.use((req, res, next) => {
+  const decoded = decodeURIComponent(req.path);
+  if (decoded !== req.path) {
+    // Try exact file
+    const filePath = path.join(__dirname, decoded);
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+    // Try with .html extension
+    const htmlPath = filePath + '.html';
+    if (fs.existsSync(htmlPath)) {
+      return res.sendFile(htmlPath);
+    }
+    // Try as directory with index.html
+    const indexPath = path.join(filePath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname), {
   index: 'index.html'
 }));
+
+// Fallback: try .html extension for non-encoded paths
+app.use((req, res, next) => {
+  const filePath = path.join(__dirname, req.path + '.html');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  next();
+});
 
 // Helper: read inquiries
 function readInquiries() {
