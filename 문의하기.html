@@ -2470,6 +2470,12 @@
 @media (min-width: 810px) and (max-width: 1199.98px){.ssr-variant.hidden-18veg9o{display:none!important}}
 @media (max-width: 809.98px){.ssr-variant.hidden-x4ekt4{display:none!important}}
 </style>
+<style>
+@media (max-width: 809.98px) {
+  #mobile-header { display:flex!important; }
+  .ssr-variant.hidden-1nb8mu9.hidden-18veg9o { display:none!important; }
+}
+</style>
 </head>
 <body>
     <script async src="https://events.framer.com/script?v=2" data-fid="9f14a5cff96c5d015a23fc9f48f72e410a4648f042259c0553c3dc1275a51095" data-no-nt></script>
@@ -2498,11 +2504,19 @@
 <a href="./채용정보" style="display:block;padding:12px 0;text-decoration:none;font-family:'Noto Sans KR',sans-serif;font-size:15px;color:#18212d;border-bottom:1px solid #f0f0f0;">채용정보</a>
 <a href="./문의하기" style="display:block;padding:12px 0;text-decoration:none;font-family:'Noto Sans KR',sans-serif;font-size:15px;color:#18212d;">문의하기</a>
 </div>
+
+<div id="mobile-header" style="display:none;position:fixed;top:0;left:0;right:0;background:rgb(250,250,250);z-index:98;padding:16px 20px;flex-direction:row;justify-content:space-between;align-items:center;">
+<a href="./" style="text-decoration:none;"><img src="images/logo.png" alt="DB Solution" style="height:20px;width:auto;"></a>
+<div id="mobile-hamburger" style="cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:5px;">
+<div style="width:20px;height:2px;background:#18212d;"></div>
+<div style="width:20px;height:2px;background:#18212d;"></div>
+<div style="width:20px;height:2px;background:#18212d;"></div>
+</div>
+</div>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
-document.querySelectorAll('.framer-9cii0g-container').forEach(function(el){
-el.style.cursor="pointer";
-el.addEventListener("click",function(e){
+var hamburger=document.getElementById("mobile-hamburger");
+if(hamburger){hamburger.addEventListener("click",function(e){
 e.stopPropagation();
 var menu=document.getElementById("mobile-menu");
 var overlay=document.getElementById("mobile-menu-overlay");
@@ -2511,8 +2525,7 @@ var isOpen=menu.style.display!=="none";
 menu.style.display=isOpen?"none":"block";
 overlay.style.display=isOpen?"none":"block";
 }
-});
-});
+});}
 });
 </script>
 </body>
