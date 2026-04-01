@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 - 문의 관리</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; }
+
+  /* Login */
+  .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .login-box { background: #fff; border-radius: 12px; padding: 48px 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
+  .login-box h1 { font-size: 22px; margin-bottom: 8px; color: #18212d; }
+  .login-box p { font-size: 14px; color: #888; margin-bottom: 28px; }
+  .login-box input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; outline: none; transition: border-color .2s; }
+  .login-box input:focus { border-color: #184fa1; }
+  .login-box button { width: 100%; padding: 13px; background: #184fa1; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px; transition: background .2s; }
+  .login-box button:hover { background: #133d80; }
+  .login-error { color: #e74c3c; font-size: 13px; margin-top: 12px; display: none; }
+
+  /* Dashboard */
+  .dashboard { display: none; }
+  .top-bar { background: #18212d; color: #fff; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .top-bar h1 { font-size: 18px; font-weight: 600; }
+  .top-bar button { background: rgba(255,255,255,0.15); color: #fff; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .top-bar button:hover { background: rgba(255,255,255,0.25); }
+
+  .content { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+  .stats { display: flex; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .stat-card { background: #fff; border-radius: 10px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); flex: 1; min-width: 160px; }
+  .stat-card .label { font-size: 13px; color: #888; margin-bottom: 6px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: #18212d; }
+
+  .table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  thead th { background: #f8f9fb; padding: 14px 16px; text-align: left; font-size: 13px; font-weight: 600; color: #666; border-bottom: 1px solid #eee; white-space: nowrap; }
+  tbody td { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: top; }
+  tbody tr:hover { background: #f9fbff; }
+  .td-inquiry { max-width: 300px; white-space: pre-wrap; word-break: break-word; }
+  .td-date { white-space: nowrap; color: #888; font-size: 13px; }
+  .btn-del { background: #fff; color: #e74c3c; border: 1px solid #e74c3c; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all .2s; }
+  .btn-del:hover { background: #e74c3c; color: #fff; }
+  .empty-msg { text-align: center; padding: 60px 20px; color: #aaa; font-size: 15px; }
+  .loading { text-align: center; padding: 40px; color: #aaa; }
+
+  @media (max-width: 768px) {
+    .top-bar { padding: 14px 16px; }
+    .content { padding: 20px 12px; }
+    .stat-card { min-width: 120px; }
+    .stat-card .value { font-size: 22px; }
+    thead th, tbody td { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-box">
+    <h1>관리자 로그인</h1>
+    <p>문의 내역을 확인하려면 비밀번호를 입력하세요.</p>
+    <form id="loginForm">
+      <input type="password" id="passwordInput" placeholder="비밀번호" autocomplete="off" autofocus>
+      <button type="submit">로그인</button>
+      <div class="login-error" id="loginError">비밀번호가 올바르지 않습니다.</div>
+    </form>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <div class="top-bar">
+    <h1>문의 관리</h1>
+    <button onclick="logout()">로그아웃</button>
+  </div>
+  <div class="content">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="label">전체 문의</div>
+        <div class="value" id="totalCount">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">오늘 문의</div>
+        <div class="value" id="todayCount">-</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>번호</th>
+            <th>이름</th>
+            <th>연락처</th>
+            <th>이메일</th>
+            <th>문의사항</th>
+            <th>접수일시</th>
+            <th>삭제</th>
+          </tr>
+        </thead>
+        <tbody id="inquiryBody">
+          <tr><td colspan="7" class="loading">로딩 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const API = '/api';
+
+  function getToken() { return sessionStorage.getItem('admin_token'); }
+  function setToken(t) { sessionStorage.setItem('admin_token', t); }
+  function clearToken() { sessionStorage.removeItem('admin_token'); }
+
+  // Check if already logged in
+  if (getToken()) {
+    showDashboard();
+  }
+
+  // Login form
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const pw = document.getElementById('passwordInput').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+
+    try {
+      const res = await fetch(API + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errEl.style.display = 'block';
+        errEl.textContent = data.error || '로그인 실패';
+        return;
+      }
+      setToken(data.token);
+      showDashboard();
+    } catch (err) {
+      errEl.style.display = 'block';
+      errEl.textContent = '서버 오류가 발생했습니다.';
+    }
+  });
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadInquiries();
+  }
+
+  async function loadInquiries() {
+    const tbody = document.getElementById('inquiryBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">로딩 중...</td></tr>';
+
+    try {
+      const res = await fetch(API + '/inquiries', {
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      if (res.status === 401) {
+        clearToken();
+        location.reload();
+        return;
+      }
+      const data = await res.json();
+
+      // Stats
+      document.getElementById('totalCount').textContent = data.length;
+      const today = new Date().toISOString().slice(0, 10);
+      const todayItems = data.filter(d => d.접수일시 && d.접수일시.slice(0, 10) === today);
+      document.getElementById('todayCount').textContent = todayItems.length;
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">접수된 문의가 없습니다.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(function(item, idx) {
+        const tr = document.createElement('tr');
+        const dt = item.접수일시 ? new Date(item.접수일시) : null;
+        const dateStr = dt ? dt.getFullYear() + '-' +
+          String(dt.getMonth()+1).padStart(2,'0') + '-' +
+          String(dt.getDate()).padStart(2,'0') + ' ' +
+          String(dt.getHours()).padStart(2,'0') + ':' +
+          String(dt.getMinutes()).padStart(2,'0') : '-';
+
+        tr.innerHTML =
+          '<td>' + (idx + 1) + '</td>' +
+          '<td>' + esc(item.이름) + '</td>' +
+          '<td>' + esc(item.연락처) + '</td>' +
+          '<td>' + esc(item.이메일) + '</td>' +
+          '<td class="td-inquiry">' + esc(item.문의사항) + '</td>' +
+          '<td class="td-date">' + dateStr + '</td>' +
+          '<td><button class="btn-del" data-id="' + item.id + '">삭제</button></td>';
+        tbody.appendChild(tr);
+      });
+
+      // Delete buttons
+      tbody.querySelectorAll('.btn-del').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          if (confirm('이 문의를 삭제하시겠습니까?')) {
+            deleteInquiry(this.dataset.id);
+          }
+        });
+      });
+
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">데이터를 불러올 수 없습니다.</td></tr>';
+    }
+  }
+
+  async function deleteInquiry(id) {
+    try {
+      const res = await fetch(API + '/inquiries/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + getToken() }
+      });
+      if (res.status === 401) {
+        clearToken();
+        location.reload();
+        return;
+      }
+      loadInquiries();
+    } catch (err) {
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  }
+
+  function esc(str) {
+    if (!str) return '';
+    var d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // Expose logout globally
+  window.logout = function() {
+    clearToken();
+    location.reload();
+  };
+
+  // Expose loadInquiries for refresh
+  window.loadInquiries = loadInquiries;
+})();
+</script>
+</body>
+</html>

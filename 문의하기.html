@@ -2528,5 +2528,64 @@ overlay.style.display=isOpen?"none":"block";
 });}
 });
 </script>
+<script>
+(function() {
+  // Wait for DOM to be ready, then attach to the Framer form
+  function attachFormHandler() {
+    var forms = document.querySelectorAll('form.framer-15duci9');
+    if (!forms.length) {
+      // Retry if form not yet rendered
+      setTimeout(attachFormHandler, 500);
+      return;
+    }
+    forms.forEach(function(form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var data = {
+          '이름': (form.querySelector('input[name="이름"]') || {}).value || '',
+          '연락처': (form.querySelector('input[name="연락처"]') || {}).value || '',
+          '이메일': (form.querySelector('input[name="이메일"]') || {}).value || '',
+          '문의사항': (form.querySelector('textarea[name="문의사항"]') || {}).value || ''
+        };
+
+        if (!data['이름'] || !data['연락처']) {
+          alert('이름과 연락처는 필수 입력 항목입니다.');
+          return;
+        }
+
+        fetch('/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          if (result.success) {
+            alert('문의가 정상적으로 접수되었습니다. 감사합니다.');
+            form.reset();
+            // Clear input styling
+            form.querySelectorAll('.framer-form-input').forEach(function(el) {
+              el.classList.add('framer-form-input-empty');
+            });
+          } else {
+            alert('문의 접수에 실패했습니다: ' + (result.error || '알 수 없는 오류'));
+          }
+        })
+        .catch(function() {
+          alert('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        });
+      }, true);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachFormHandler);
+  } else {
+    attachFormHandler();
+  }
+})();
+</script>
 </body>
 </html>

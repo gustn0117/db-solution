@@ -3,4 +3,9 @@ services:
     build: .
     ports:
       - "${PORT:-3000}:3000"
+    volumes:
+      - inquiry-data:/data
     restart: unless-stopped
+
+volumes:
+  inquiry-data:
