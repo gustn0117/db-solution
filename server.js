@@ -28,18 +28,17 @@ app.use((req, res, next) => {
 
 // Decode Korean URL paths and try .html extension
 app.use((req, res, next) => {
-  const decoded = decodeURIComponent(req.path);
-  if (decoded !== req.path) {
-    const filePath = path.join(__dirname, decoded);
-    // Try with .html extension first (handles 채용정보.html vs 채용정보/ folder)
-    const htmlPath = filePath + '.html';
-    if (fs.existsSync(htmlPath)) {
-      return res.sendFile(htmlPath);
-    }
-    // Try exact file (not directory)
-    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-      return res.sendFile(filePath);
-    }
+  const decoded = decodeURIComponent(req.path).replace(/\/+$/, '') || '/';
+  if (decoded === '/') return next();
+  const filePath = path.join(__dirname, decoded);
+  // Try .html extension first (handles 채용정보.html vs 채용정보/ folder)
+  const htmlPath = filePath + '.html';
+  if (fs.existsSync(htmlPath)) {
+    return res.sendFile(htmlPath);
+  }
+  // Try exact file (not directory)
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    return res.sendFile(filePath);
   }
   next();
 });
