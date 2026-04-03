@@ -30,20 +30,15 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   const decoded = decodeURIComponent(req.path);
   if (decoded !== req.path) {
-    // Try exact file
     const filePath = path.join(__dirname, decoded);
-    if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
-    }
-    // Try with .html extension
+    // Try with .html extension first (handles 채용정보.html vs 채용정보/ folder)
     const htmlPath = filePath + '.html';
     if (fs.existsSync(htmlPath)) {
       return res.sendFile(htmlPath);
     }
-    // Try as directory with index.html
-    const indexPath = path.join(filePath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
+    // Try exact file (not directory)
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
     }
   }
   next();
