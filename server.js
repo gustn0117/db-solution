@@ -14,10 +14,20 @@ const tokens = new Set();
 
 app.use(express.json());
 
-// Serve static files, but block sensitive files
+// Redirect trailing slashes to non-trailing (except root)
+// This prevents relative path issues (./채용정보/6 resolving wrong)
+app.use((req, res, next) => {
+  if (req.path !== '/' && req.path.endsWith('/')) {
+    const query = req.url.slice(req.path.length);
+    return res.redirect(301, req.path.slice(0, -1) + query);
+  }
+  next();
+});
+
+// Block sensitive files
 app.use((req, res, next) => {
   const blocked = ['/server.js', '/package.json', '/package-lock.json', '/node_modules', '/data', '/Dockerfile', '/docker-compose.yml', '/nginx.conf', '/.git', '/.dockerignore'];
-  const lower = req.path.toLowerCase();
+  const lower = decodeURIComponent(req.path).toLowerCase();
   for (const b of blocked) {
     if (lower === b || lower.startsWith(b + '/')) {
       return res.status(404).send('Not found');
@@ -28,7 +38,7 @@ app.use((req, res, next) => {
 
 // Decode Korean URL paths and try .html extension
 app.use((req, res, next) => {
-  const decoded = decodeURIComponent(req.path).replace(/\/+$/, '') || '/';
+  const decoded = decodeURIComponent(req.path);
   if (decoded === '/') return next();
   const filePath = path.join(__dirname, decoded);
   // Try .html extension first (handles 채용정보.html vs 채용정보/ folder)
@@ -37,22 +47,28 @@ app.use((req, res, next) => {
     return res.sendFile(htmlPath);
   }
   // Try exact file (not directory)
-  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    return res.sendFile(filePath);
-  }
+  try {
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      return res.sendFile(filePath);
+    }
+  } catch (e) {}
   next();
 });
 
 app.use(express.static(path.join(__dirname), {
-  index: 'index.html'
+  index: 'index.html',
+  redirect: false
 }));
 
 // Fallback: try .html extension for non-encoded paths
 app.use((req, res, next) => {
-  const filePath = path.join(__dirname, req.path + '.html');
-  if (fs.existsSync(filePath)) {
-    return res.sendFile(filePath);
-  }
+  const decoded = decodeURIComponent(req.path);
+  const filePath = path.join(__dirname, decoded + '.html');
+  try {
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+  } catch (e) {}
   next();
 });
 
